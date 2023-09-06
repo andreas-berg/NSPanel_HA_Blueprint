@@ -6653,9 +6653,36 @@ action:
                                         component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_state" if repeat.item.page == page.home }}'
                                         message: >
                                           {{
-                                            (repeat_item_state | round(1) ~ (state_attr(repeat.item.entity, "unit_of_measurement") | default("") if state_attr(repeat.item.entity, "unit_of_measurement") is string else ""))
+                                            (repeat_item_state | round(1))
                                             if is_number(repeat_item_state)
                                             else repeat_item_state
+                                          }}
+                                      continue_on_error: true
+                                    ### UNIT Font Color ###
+                                    - *delay-default
+                                    - service: '{{ nextion.command.font_color }}'
+                                      data:
+                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_unit" if repeat.item.page == page.home }}'
+                                        message: >
+                                          {{
+                                            repeat.item.label_color_rgb
+                                            if is_number(repeat.item.label_color_rgb)
+                                            else
+                                              ((repeat.item.label_color_rgb[0] //(2**3)) *(2**11))+
+                                              ((repeat.item.label_color_rgb[1] //(2**2)) *(2**5))+
+                                               (repeat.item.label_color_rgb[2] //(2**3))
+                                          }}
+                                      continue_on_error: true
+                                    ### UNIT Font ###
+                                    - *delay-default
+                                    - service: '{{ nextion.command.text_printf }}'
+                                      data:
+                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_unit" if repeat.item.page == page.home }}'
+                                        message: >
+                                          {{
+                                            ((state_attr(repeat.item.entity, "unit_of_measurement") | default("") if state_attr(repeat.item.entity, "unit_of_measurement") is string else ""))
+                                            if is_number(repeat_item_state)
+                                            else ""
                                           }}
                                       continue_on_error: true
 
