@@ -3686,6 +3686,8 @@ variables:
       - "entitypage02"
       - "entitypage03"
       - "entitypage04"
+    energypages: 
+      - "energypage01"
 
   ##### MUI Multilingual User Interface #####
   mui:
@@ -8173,6 +8175,132 @@ action:
                               message: '{{ qrcode_value }}'
                             continue_on_error: true
 
+                      ## PAGE ENERGYPAGES ##
+                      - alias: Energy pages
+                        conditions: '{{ nspanel_event.page in page.energypages }}'
+                        sequence:
+
+                          ##### ENERGY VALUE 01 - 03
+                          - *delay-default
+                          - &variables-energy_page_values
+                            variables:
+                              energy_page_values:
+                                - entity: !input 'home_value01'
+                                  icon: !input 'home_value01_icon'
+                                  icon_color_rgb: !input 'home_value01_icon_color'
+                                  label_color_rgb: !input 'home_value01_label_color'
+                                  page: energypage01
+                                  component: value01
+                                - entity: !input 'home_value02'
+                                  icon: !input 'home_value02_icon'
+                                  icon_color_rgb: !input 'home_value02_icon_color'
+                                  label_color_rgb: !input 'home_value02_label_color'
+                                  page: energypage01
+                                  component: value02
+                                - entity: !input 'home_value03'
+                                  icon: !input 'home_value03_icon'
+                                  icon_color_rgb: !input 'home_value03_icon_color'
+                                  label_color_rgb: !input 'home_value03_label_color'
+                                  page: energypage01
+                                  component: value03
+                          - repeat:
+                              for_each: '{{ energy_page_values }}'
+                              sequence:
+                                - &display_value
+                                  if: '{{ repeat.item.entity is string and repeat.item.entity is match "sensor." and states(repeat.item.entity) not in ["unavailable", "unknown", "", None] }}'
+                                  then:
+                                    - if: '{{ repeat.item.icon | length > 0 }}'
+                                      then:
+                                        ### ICON Font Color ###
+                                        - *delay-default
+                                        - service: '{{ nextion.command.font_color }}'
+                                          data:
+                                            component: '{{ repeat.item.page }}.{{ repeat.item.component }}_icon'
+                                            message: >
+                                              {{
+                                                repeat.item.icon_color_rgb
+                                                if is_number(repeat.item.icon_color_rgb)
+                                                else
+                                                  ((repeat.item.icon_color_rgb[0] //(2**3)) *(2**11))+
+                                                  ((repeat.item.icon_color_rgb[1] //(2**2)) *(2**5))+
+                                                   (repeat.item.icon_color_rgb[2] //(2**3))
+                                              }}
+                                          continue_on_error: true
+                                        ### ICON Text ###
+                                        - *delay-default
+                                        - service: '{{ nextion.command.text_printf }}'
+                                          data:
+                                            component: '{{ repeat.item.page }}.{{ repeat.item.component }}_icon'
+                                            message: >
+                                              {% if repeat.item.icon is string %}
+                                                {{
+                                                  all_icons[repeat.item.icon.split(":")[1]] | default(all_icons.unknown)
+                                                  if repeat.item.icon.split(":") | count > 0
+                                                  else repeat.item.icon
+                                                }}
+                                              {% else %}{{ all_icons.unknown }}
+                                              {% endif %}
+                                          continue_on_error: true
+                                    - variables:
+                                        repeat_item_state: '{{ states(repeat.item.entity) | default("unavailable") }}'
+                                        repeat_item_state_available: '{{ repeat_item_state not in ["unavailable", "unknown", "", None] }}'
+                                    - condition: '{{ repeat_item_state_available }}'
+                                    ### LABEL Font Color ###
+                                    - *delay-default
+                                    - service: '{{ nextion.command.font_color }}'
+                                      data:
+                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_state" if repeat.item.page == page.home }}'
+                                        message: >
+                                          {{
+                                            repeat.item.label_color_rgb
+                                            if is_number(repeat.item.label_color_rgb)
+                                            else
+                                              ((repeat.item.label_color_rgb[0] //(2**3)) *(2**11))+
+                                              ((repeat.item.label_color_rgb[1] //(2**2)) *(2**5))+
+                                               (repeat.item.label_color_rgb[2] //(2**3))
+                                          }}
+                                      continue_on_error: true
+                                    ### LABEL Text ###
+                                    - *delay-default
+                                    - service: '{{ nextion.command.text_printf }}'
+                                      data:
+                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_state" if repeat.item.page == page.home }}'
+                                        message: >
+                                          {{
+                                            ((repeat_item_state | float / 1000.0) | round(3) if repeat_item_state >= 1000 else repeat_item_state | round(1 if repeat_item_state < 100 else 0) )
+                                            if is_number(repeat_item_state)
+                                            else repeat_item_state
+                                          }}
+                                      continue_on_error: true
+                                    ### UNIT Font Color ###
+                                    - *delay-default
+                                    - service: '{{ nextion.command.font_color }}'
+                                      data:
+                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_unit" if repeat.item.page == page.home }}'
+                                        message: >
+                                          {{
+                                            repeat.item.label_color_rgb
+                                            if is_number(repeat.item.label_color_rgb)
+                                            else
+                                              ((repeat.item.label_color_rgb[0] //(2**3)) *(2**11))+
+                                              ((repeat.item.label_color_rgb[1] //(2**2)) *(2**5))+
+                                               (repeat.item.label_color_rgb[2] //(2**3))
+                                          }}
+                                      continue_on_error: true
+                                    ### UNIT Text ###
+                                    - *delay-default
+                                    - service: '{{ nextion.command.text_printf }}'
+                                      data:
+                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_unit" if repeat.item.page == page.home }}'
+                                        message: >
+                                          {{
+                                            (("k" if repeat_item_state >= 1000 else "") ~ (state_attr(repeat.item.entity, "unit_of_measurement") | default("") if state_attr(repeat.item.entity, "unit_of_measurement") is string else ""))
+                                            if is_number(repeat_item_state)
+                                            else ""
+                                          }}
+                                      continue_on_error: true
+
+
                       ## PAGE SETTINGS ##
                       #- alias: Settings page
                       #  conditions: '{{ nspanel_event.page == page.settings }}'
@@ -8509,6 +8637,17 @@ action:
                     data:
                       cmd: 'page {{ page.weatherpages[0] }}'
                     continue_on_error: true
+
+              - alias: Jump to energy page
+                conditions:
+                - '{{ nspanel_event.page == page.home }}'
+                - '{{ nspanel_event.component == "energy" }}'
+                - '{{ nspanel_event.value == "release" }}'
+                sequence:
+                - service: '{{ nextion.command.printf }}'
+                  data:
+                    cmd: page {{ page.energypages[0] }}
+                  continue_on_error: true
 
               - alias: Jump to QR code page
                 conditions:
@@ -8926,6 +9065,22 @@ action:
           - "{{ trigger.event.data.new_state.state == 'off' }}"
         sequence:
           - *jump_page_home
+
+      ##### Energy page 01 - Values #####
+      - alias: Energy page 01 - Values
+        conditions:
+          - condition: trigger
+            id:
+              - home_value01_state
+              - home_value02_state
+              - home_value03_state
+          - '{{ nspanel_event.page == page.energypage01 }}'
+        sequence:
+          - *variables-energy_page_values
+          - repeat:
+              for_each: '{{ energy_page_values | selectattr("entity", "defined") | selectattr("entity", "eq", trigger.entity_id) | list }}'
+              sequence:
+                - *display_value
 
 #############################################################
 ##### CLOSE - Action #####
