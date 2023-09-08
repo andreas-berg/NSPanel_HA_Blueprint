@@ -6009,6 +6009,32 @@ trigger:
         entity_id: "{{ switch_sleep_mode }}"
       id: sleep_mode_state
 
+  ##### Trigger - Energy - Values - State change #################################################################################################################
+
+    ##### ENERGY Value 01 - Trigger 'home_value01_state' #####
+    - platform: state
+      entity_id: !input 'home_value01'
+      not_to:
+        - unknown
+        - unavailable
+      id: energy_value01_state
+
+    ##### ENERGY Value 02 - Trigger 'home_value02_state' #####
+    - platform: state
+      entity_id: !input 'home_value02'
+      not_to:
+        - unknown
+        - unavailable
+      id: energy_value02_state
+
+    ##### ENERGY Value 03 - Trigger 'home_value03_state' #####
+    - platform: state
+      entity_id: !input 'home_value03'
+      not_to:
+        - unknown
+        - unavailable
+      id: energy_value03_state
+
 #############################################################
 ##### CLOSE - Trigger #####
 #############################################################
@@ -9071,9 +9097,9 @@ action:
         conditions:
           - condition: trigger
             id:
-              - home_value01_state
-              - home_value02_state
-              - home_value03_state
+              - energy_value01_state
+              - energy_value02_state
+              - energy_value03_state
           - '{{ nspanel_event.page == page.energypage01 }}'
         sequence:
           - *variables-energy_page_values
