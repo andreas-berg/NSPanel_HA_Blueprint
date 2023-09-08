@@ -8439,6 +8439,169 @@ action:
                                             else ""
                                           }}
                                       continue_on_error: true
+                          ##### DRAW GRAPH
+                          - variables:
+                              cs:
+                                - ts: 0
+                                  c: 30189
+                                  rgb: rgb(115, 191, 105)
+                                - th: 10
+                                  c: 65253
+                                  rgb: rgb(250, 222, 42)
+                                - th: 20
+                                  c: 64710
+                                  rgb: rgb(255, 152, 48)
+                                - th: 40
+                                  c: 62027
+                                  rgb: rgb(242, 73, 92)
+                                - th: 60
+                                  c: 41625
+                                  rgb: rgb(163, 82, 204)
+                              today: "{{ state_attr(\"sensor.nordpool_kwh_fi_eur_3_10_0\",\"today\") | list }}"
+                              tomorrow: "{{ state_attr(\"sensor.nordpool_kwh_fi_eur_3_10_0\",\"tomorrow\") | list }}"
+                              show_day: 0
+                              data: "{{ tomorrow if (show_day == 1 and tomorrow is defined) else today }}"
+                              now_hour_float: "{{ ( now().hour|float ) + ( ( now().minute|float ) / 60.0 ) }}"
+                              now_hour_arr: '{{ ( ( now() - today_at("00:00") ) | string ).split(":") }}'
+                              mx: "{{ max(data) }}"
+                              future_data: "{{ (today + tomorrow) if tomorrow is iterable else today }}"
+                              future_min: "{{ min(future_data[now().hour:]) }}"
+                              future_min_hour: "{{ future_data.index(future_min) }}"
+                              future_min_d: 1
+                              future_min_delta:
+                                next_day: '{{ 1 if future_min_hour > 23 else 0 }}'
+                                hours: '{{ future_min_hour - now_hour_arr[0]|int - 1 }}'
+                                minutes: '{{ 60 - now_hour_arr[1]|int }}'
+                              hmax: 160
+                              xoff: 40
+                              yoff: 220
+                              colw: 10
+                              delay_value: 1
+                          # WAIT FOR PAGE TRANSISTION
+                          - delay:
+                              milliseconds: 2000
+                          # DRAW X-axis
+                          - repeat:
+                              for_each:
+                                - 0
+                                - 3
+                                - 6
+                                - 9
+                                - 12
+                                - 15
+                                - 18
+                                - 21
+                                - 0
+                              sequence:
+                                - service: '{{ nextion.command.printf }}'
+                                  data:
+                                    cmd: >-
+                                      line {{ ((repeat.index * 10 * 3) + 28)|string }},{{ (yoff +
+                                      4)|string }},{{ ((repeat.index * 10 * 3) + 28)|string }},{{
+                                      yoff|string }},WHITE
+                                  continue_on_error: true
+                                - *delay-default
+                                - service: '{{ nextion.command.printf }}'
+                                  data:
+                                    cmd: >-
+                                      xstr {{ ((repeat.index * 10 * 3) + 22)|string }},{{ (yoff +
+                                      4)|string }},16,16,0,WHITE,388,1,0,1,"{{ repeat.item|string }}"
+                                  continue_on_error: true
+                                - *delay-default
+                          # DRAW HORIZONTAL GRID LINES
+                          - repeat:
+                              for_each: "{{ [0.2,0.4,0.6,0.8,1.0] }}"
+                              sequence:
+                                - variables:
+                                    i: "{{ repeat.item|float }}"
+                                - service: '{{ nextion.command.printf }}'
+                                  data:
+                                    cmd: >-
+                                      draw {{ ( xoff + 6 ) |string }},{{ ( yoff - (i * hmax|float)|int )|string }},{{ ( xoff + (24 * 10) + 20 )|string }},{{ ( yoff - (i * hmax|float)|int  )|string }},GRAY
+                                  continue_on_error: true
+                                - *delay-default
+                                - service: '{{ nextion.command.printf }}'
+                                  data:
+                                    cmd: >-
+                                      xstr {{ ( xoff - 25 )|string }},{{ (yoff - (i * hmax|float)|int - 7 )|string }},40,16,0,WHITE,388,1,0,1,"{{ ( i|float * mx|float )|round(1)|string }}"
+                                  continue_on_error: true
+                                - *delay-default
+                          # PLOT THE BARS, EVALUATE BAR COLOR FROM THRESHOLDS
+                          - repeat:
+                              for_each: "{{ data }}"
+                              sequence:
+                                - variables:
+                                    v: "{{ repeat.item }}"
+                                    c: >-
+                                      {{ cs[4].c if v > cs[4].th else cs[3].c if v > cs[3].th else
+                                      cs[2].c if v > cs[2].th else cs[1].c if v > cs[1].th else cs[0].c
+                                      }}
+                                    x: "{{ (xoff + (repeat.index * colw) + colw) }}"
+                                    q: "{{ (hmax/mx)|float }}"
+                                    h: "{{ (repeat.item * q)|int }}"
+                                - service: '{{ nextion.command.printf }}'
+                                  data:
+                                    cmd: >-
+                                      fill {{ x|string }},{{ (yoff - h)|string }},{{(colw-3)|string}},{{
+                                      h|string }},{{ c }}
+                                  continue_on_error: true
+                                - *delay-default
+                          # DRAW VERTICAL LINE SHOWING CURRENT TIME (ONLY ON TODAYS DATA)
+                          - service: '{{ nextion.command.printf }}'
+                            data:
+                              cmd: >-
+                                draw {{ (((now_hour_float + 2.0) * colw|float)|int + xoff - 2)|string }},{{ (yoff - hmax - 4)|string }},{{ (((now_hour_float + 2.0) * colw|float)|int + xoff - 1)|string }},{{ (yoff + 4)|string }},WHITE
+                            continue_on_error: true
+                          - *delay-default
+                          # PRINT TEXTS
+                          - variables:
+                              texts:
+                                - desc: "Spotpris"
+                                  value: "{{ data[now().hour] }}"
+                                  unit: "c/kWh"
+                                - desc: "Billigast"
+                                  value: "{{ future_min|string }}"
+                                  unit: "c/kWh"
+                                - desc: "Klockan"
+                                  value: "{{ (future_min_hour - 24 if future_min_delta.next_day > 0 else future_min_hour)|string }}-{{ (future_min_hour - 24 + 1 if future_min_delta.next_day > 0 else future_min_hour + 1 )|string}}"
+                                  unit: "{{ \"(+1d)\" if future_min_delta.next_day>0 else \"\" }}"
+                                - desc: "Om"
+                                  value: "{{ future_min_delta.hours ~ \"h\" ~ future_min_delta.minutes ~ \"m\" }}"
+                          - service: '{{ nextion.command.printf }}'
+                            data:
+                              cmd: >-
+                                xstr {{ ( xoff + (12 * 10) - 50 )|string }},{{ (yoff - hmax - 50)|string }},100,32,3,WHITE,388,1,0,1,"{{ 'I morgon' if show_day == 1 else 'I dag' }}"
+                            continue_on_error: true
+                          - *delay-default
+                          - repeat:
+                              for_each: "{{ texts }}"
+                              sequence:
+                                - service: '{{ nextion.command.printf }}'
+                                  data:
+                                    cmd: >-
+                                      xstr {{ ( xoff + (24 * 10) + 30 )|string }},{{ (yoff - hmax + repeat.index * 48 - 60)|string }},84,16,0,WHITE,388,0,1,1,"{{ repeat.item.desc|string }}"
+                                  continue_on_error: true
+                                - *delay-default
+                                - if: '{{ repeat.item.unit is defined }}'
+                                  then:
+                                    - service: '{{ nextion.command.printf }}'
+                                      data:
+                                        cmd: >-
+                                          xstr {{ ( xoff + (24 * 10) + 30 )|string }},{{ (yoff - hmax + repeat.index * 48 - 44)|string }},80,32,3,WHITE,388,2,0,1,"{{ repeat.item.value|string }}"
+                                      continue_on_error: true
+                                    - *delay-default
+                                    - service: '{{ nextion.command.printf }}'
+                                      data:
+                                        cmd: xstr {{ ( xoff + (24 * 10) + 110 )|string }},{{ (yoff - hmax + repeat.index * 48 - 44)|string }},48,16,0,WHITE,388,0,0,1,"{{ repeat.item.unit|string }}"
+                                      continue_on_error: true
+                                    - *delay-default
+                                  else:
+                                    - service: '{{ nextion.command.printf }}'
+                                      data:
+                                        cmd: >-
+                                          xstr {{ ( xoff + (24 * 10) + 30 )|string }},{{ (yoff - hmax + repeat.index * 48 - 44)|string }},128,32,3,WHITE,388,1,0,1,"{{ repeat.item.value|string }}"
+                                      continue_on_error: true
+                                    - *delay-default
 
 
                       ## PAGE SETTINGS ##
