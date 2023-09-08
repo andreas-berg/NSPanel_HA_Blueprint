@@ -3378,6 +3378,120 @@ blueprint:
             default: []
             selector: *icon-selector
 
+      ##### Sensors - Page Energy #####
+        ##### PLACEHOLDER ######################################################################
+          placeholder02:
+            name: ' '
+            description: '# ✅ SENSOR ON ENERGY PAGE ✅'
+            default: ' '
+            selector: *placeholder-selector
+        ##### PLACEHOLDER ######################################################################
+          energy_value01:
+            name: Sensor 01 - ENTITY (Optional)
+            description: >
+              *ENERGY page*
+
+              *Entity which should be displayed*
+            default: []
+            selector:
+              entity:
+                domain:
+                  - sensor
+          energy_value01_icon:
+            name: Sensor 01 - ICON (Optional)
+            description: >
+              *ENERGY page*
+
+              *Icon which should be displayed (if not set, it would be used an icon from attributes, if available, or no icon is shown)*
+            default: []
+            selector: *icon-selector
+          energy_value01_icon_color:
+            name: Sensor 01 - ICON COLOR (Optional)
+            description: >
+              *ENERGY page*
+
+              *Icon color which should be displayed*
+            default: [200, 204, 200] #52857 Grey super light
+            selector: *color-selector
+          energy_value01_label_color:
+            name: Sensor 01 - LABEL COLOR (Optional)
+            description: >
+              *ENERGY page*
+
+              *Label color which should be displayed*
+            default: [200, 204, 200] #52857 Grey super light
+            selector: *color-selector
+          energy_value02:
+            name: Sensor 02 - ENTITY (Optional)
+            description: >
+              *ENERGY page*
+
+              *Entity which should be displayed*
+            default: []
+            selector:
+              entity:
+                domain:
+                  - sensor
+          energy_value02_icon:
+            name: Sensor 02 - ICON (Optional)
+            description: >
+              *ENERGY page*
+
+              *Icon which should be displayed (if not set, it would be used an icon from attributes, if available, or no icon is shown)*
+            default: []
+            selector: *icon-selector
+          energy_value02_icon_color:
+            name: Sensor 02 - ICON COLOR (Optional)
+            description: >
+              *ENERGY page*
+
+              *Icon color which should be displayed*
+            default: [200, 204, 200] #52857 Grey super light
+            selector: *color-selector
+          energy_value02_label_color:
+            name: Sensor 02 - LABEL COLOR (Optional)
+            description: >
+              *ENERGY page*
+
+              *Label color which should be displayed*
+            default: [200, 204, 200] #52857 Grey super light
+            selector: *color-selector
+          energy_value03:
+            name: Sensor 03 - ENTITY (Optional)
+            description: >
+              *ENERGY page*
+
+              *Entity which should be displayed*
+            default: []
+            selector:
+              entity:
+                domain:
+                  - sensor
+          energy_value03_icon:
+            name: Sensor 03 - ICON (Optional)
+            description: >
+              *ENERGY page*
+
+              *Icon which should be displayed (if not set, it would be used an icon from attributes, if available, or no icon is shown)*
+            default: []
+            selector: *icon-selector
+          energy_value03_icon_color:
+            name: Sensor 03 - ICON COLOR (Optional)
+            description: >
+              *ENERGY page*
+
+              *Icon color which should be displayed*
+            default: [200, 204, 200] #52857 Grey super light
+            selector: *color-selector
+          energy_value03_label_color:
+            name: Sensor 03 - LABEL COLOR (Optional)
+            description: >
+              *ENERGY page*
+
+              *Label color which should be displayed*
+            default: [200, 204, 200] #52857 Grey super light
+            selector: *color-selector
+
     ##### General Custom Design #####
         ##### PLACEHOLDER ######################################################################
           placeholder16:
@@ -6011,25 +6125,25 @@ trigger:
 
   ##### Trigger - Energy - Values - State change #################################################################################################################
 
-    ##### ENERGY Value 01 - Trigger 'home_value01_state' #####
+    ##### ENERGY Value 01 - Trigger 'energy_value01_state' #####
     - platform: state
-      entity_id: !input 'home_value01'
+      entity_id: !input 'energy_value01'
       not_to:
         - unknown
         - unavailable
       id: energy_value01_state
 
-    ##### ENERGY Value 02 - Trigger 'home_value02_state' #####
+    ##### ENERGY Value 02 - Trigger 'energy_value02_state' #####
     - platform: state
-      entity_id: !input 'home_value02'
+      entity_id: !input 'energy_value02'
       not_to:
         - unknown
         - unavailable
       id: energy_value02_state
 
-    ##### ENERGY Value 03 - Trigger 'home_value03_state' #####
+    ##### ENERGY Value 03 - Trigger 'energy_value03_state' #####
     - platform: state
-      entity_id: !input 'home_value03'
+      entity_id: !input 'energy_value03'
       not_to:
         - unknown
         - unavailable
@@ -8211,22 +8325,22 @@ action:
                           - &variables-energy_page_values
                             variables:
                               energy_page_values:
-                                - entity: !input 'home_value01'
-                                  icon: !input 'home_value01_icon'
-                                  icon_color_rgb: !input 'home_value01_icon_color'
-                                  label_color_rgb: !input 'home_value01_label_color'
+                                - entity: !input 'energy_value01'
+                                  icon: !input 'energy_value01_icon'
+                                  icon_color_rgb: !input 'energy_value01_icon_color'
+                                  label_color_rgb: !input 'energy_value01_label_color'
                                   page: energypage01
                                   component: value01
-                                - entity: !input 'home_value02'
-                                  icon: !input 'home_value02_icon'
-                                  icon_color_rgb: !input 'home_value02_icon_color'
-                                  label_color_rgb: !input 'home_value02_label_color'
+                                - entity: !input 'energy_value02'
+                                  icon: !input 'energy_value02_icon'
+                                  icon_color_rgb: !input 'energy_value02_icon_color'
+                                  label_color_rgb: !input 'energy_value02_label_color'
                                   page: energypage01
                                   component: value02
-                                - entity: !input 'home_value03'
-                                  icon: !input 'home_value03_icon'
-                                  icon_color_rgb: !input 'home_value03_icon_color'
-                                  label_color_rgb: !input 'home_value03_label_color'
+                                - entity: !input 'energy_value03'
+                                  icon: !input 'energy_value03_icon'
+                                  icon_color_rgb: !input 'energy_value03_icon_color'
+                                  label_color_rgb: !input 'energy_value03_label_color'
                                   page: energypage01
                                   component: value03
                           - repeat:
@@ -8275,7 +8389,7 @@ action:
                                     - *delay-default
                                     - service: '{{ nextion.command.font_color }}'
                                       data:
-                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_state" if repeat.item.page == page.home }}'
+                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_state" if repeat.item.page == page.energypages[0] }}'
                                         message: >
                                           {{
                                             repeat.item.label_color_rgb
@@ -8290,7 +8404,7 @@ action:
                                     - *delay-default
                                     - service: '{{ nextion.command.text_printf }}'
                                       data:
-                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_state" if repeat.item.page == page.home }}'
+                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_state" if repeat.item.page == page.energypages[0] }}'
                                         message: >
                                           {{
                                             ((repeat_item_state | float / 1000.0) | round(3) if repeat_item_state >= 1000 else repeat_item_state | round(1 if repeat_item_state < 100 else 0) )
@@ -8302,7 +8416,7 @@ action:
                                     - *delay-default
                                     - service: '{{ nextion.command.font_color }}'
                                       data:
-                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_unit" if repeat.item.page == page.home }}'
+                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_unit" if repeat.item.page == page.energypages[0] }}'
                                         message: >
                                           {{
                                             repeat.item.label_color_rgb
@@ -8317,7 +8431,7 @@ action:
                                     - *delay-default
                                     - service: '{{ nextion.command.text_printf }}'
                                       data:
-                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_unit" if repeat.item.page == page.home }}'
+                                        component: '{{ repeat.item.page }}.{{ repeat.item.component }}{{ "_unit" if repeat.item.page == page.energypages[0] }}'
                                         message: >
                                           {{
                                             (("k" if repeat_item_state >= 1000 else "") ~ (state_attr(repeat.item.entity, "unit_of_measurement") | default("") if state_attr(repeat.item.entity, "unit_of_measurement") is string else ""))
