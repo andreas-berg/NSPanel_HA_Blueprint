@@ -8477,9 +8477,6 @@ action:
                               yoff: 220
                               colw: 10
                               delay_value: 1
-                          # WAIT FOR PAGE TRANSISTION
-                          - delay:
-                              milliseconds: 2000
                           # DRAW X-axis
                           - repeat:
                               for_each:
