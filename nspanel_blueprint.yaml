@@ -5566,8 +5566,8 @@ variables:
 
   ##### GENERAL ENTITYS #####
   outdoortemp: !input 'outdoortemp'
-  indoortemp01: !input 'indoor_temp01'
-  indoortemp02: !input 'indoor_temp02'
+  indoor_temp01: !input 'indoor_temp01'
+  indoor_temp02: !input 'indoor_temp02'
   climate: !input 'climate'
   relay_1_local_fallback: !input 'relay_1_local_fallback'
   relay_2_local_fallback: !input 'relay_2_local_fallback'
