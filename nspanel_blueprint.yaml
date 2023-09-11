@@ -246,7 +246,7 @@ blueprint:
             selector: &icon-selector
               icon:
           home_indoor_temp01_icon_color:
-            name: Indoor Temperature Sensor 01- ICON COLOR (Optional)
+            name: Indoor Temperature Sensor 01 - ICON COLOR (Optional)
             description: >
               *HOME page*
 
@@ -254,7 +254,7 @@ blueprint:
             default: [255, 255, 255] #65535 White
             selector: *color-selector
           home_indoor_temp01_label_color:
-            name: Indoor Temperature Sensor - LABEL COLOR (Optional)
+            name: Indoor Temperature Sensor 01 - LABEL COLOR (Optional)
             description: >
               *HOME page*
 
@@ -283,7 +283,7 @@ blueprint:
             selector: &icon-selector
               icon:
           home_indoor_temp02_icon_color:
-            name: Indoor Temperature Sensor 02- ICON COLOR (Optional)
+            name: Indoor Temperature Sensor 02 - ICON COLOR (Optional)
             description: >
               *HOME page*
 
@@ -291,7 +291,7 @@ blueprint:
             default: [255, 255, 255] #65535 White
             selector: *color-selector
           home_indoor_temp02_label_color:
-            name: Indoor Temperature Sensor - LABEL COLOR (Optional)
+            name: Indoor Temperature Sensor 02 - LABEL COLOR (Optional)
             description: >
               *HOME page*
 
