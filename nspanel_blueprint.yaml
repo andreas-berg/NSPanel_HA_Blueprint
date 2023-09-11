@@ -224,19 +224,20 @@ blueprint:
             default: [255, 255, 255] #65535 White
             selector: &color-selector
               color_rgb:
-          indoortemp:
-            name: Indoor Temperature Sensor - ENTITY (Optional)
+          indoor_temp01:
+            name: Indoor Temperature Sensor 01 - ENTITY (Optional)
             description: >
               *HOME page*
 
-              *An indoor temperature sensor is not necessary. Leave the field empty if you want to use the temperature sensor of the NSPanel. Additionally a temperature correction for the NSPanel sensor is possible under HA Devices. So everyone can adjust the sensor exactly*
+              *An indoor temperature sensor is not necessary. Leave the field empty if you want to use the temperature sensor of the NSPanel. Additionally a temperature correction for the NSPanel sensor is possible under HA Devices. This can be set to a climate-entity in which case the 'current_temperture'-attribute is shown*
             default: []
             selector:
               entity:
                 domain:
                   - sensor
-          home_indoor_temp_icon:
-            name: Indoor Temperature Sensor - ICON (Optional)
+                  - climate
+          home_indoor_temp01_icon:
+            name: Indoor Temperature Sensor 01 - ICON (Optional)
             description: >
               *HOME page*
 
@@ -244,15 +245,52 @@ blueprint:
             default: mdi:thermometer #E50E
             selector: &icon-selector
               icon:
-          home_indoor_temp_icon_color:
-            name: Indoor Temperature Sensor - ICON COLOR (Optional)
+          home_indoor_temp01_icon_color:
+            name: Indoor Temperature Sensor 01- ICON COLOR (Optional)
             description: >
               *HOME page*
 
               *Icon color which should be displayed*
             default: [255, 255, 255] #65535 White
             selector: *color-selector
-          home_indoor_temp_label_color:
+          home_indoor_temp01_label_color:
+            name: Indoor Temperature Sensor - LABEL COLOR (Optional)
+            description: >
+              *HOME page*
+
+              *Label color which should be displayed*
+            default: [255, 255, 255] #65535 White
+            selector: *color-selector
+          indoor_temp02:
+            name: Indoor Temperature Sensor 02 - ENTITY (Optional)
+            description: >
+              *HOME page*
+
+              *A secondary indoor temperature sensor can be set. Leave the field empty if you don't want it shown. This can also be a 'climate'-entity in which case its 'current_temperature'-attribute is shown*
+            default: []
+            selector:
+              entity:
+                domain:
+                  - sensor
+                  - climate
+          home_indoor_temp02_icon:
+            name: Indoor Temperature Sensor 02 - ICON (Optional)
+            description: >
+              *HOME page*
+
+              *Icon which should be displayed (Default mdi:thermometer)*
+            default: mdi:thermometer #E50E
+            selector: &icon-selector
+              icon:
+          home_indoor_temp02_icon_color:
+            name: Indoor Temperature Sensor 02- ICON COLOR (Optional)
+            description: >
+              *HOME page*
+
+              *Icon color which should be displayed*
+            default: [255, 255, 255] #65535 White
+            selector: *color-selector
+          home_indoor_temp02_label_color:
             name: Indoor Temperature Sensor - LABEL COLOR (Optional)
             description: >
               *HOME page*
@@ -5457,12 +5495,18 @@ variables:
       outdoor_temp:
         label:
           color_rgb: !input 'home_outdoor_temp_label_color'
-      indoor_temp:
+      indoor_temp01:
         icon:
-          icon: !input 'home_indoor_temp_icon' #E50E
-          color_rgb: !input 'home_indoor_temp_icon_color'
+          icon: !input 'home_indoor_temp01_icon' #E50E
+          color_rgb: !input 'home_indoor_temp01_icon_color'
         label:
-          color_rgb: !input 'home_indoor_temp_label_color'
+          color_rgb: !input 'home_indoor_temp01_label_color'
+      indoor_temp02:
+        icon:
+          icon: !input 'home_indoor_temp02_icon' #E50E
+          color_rgb: !input 'home_indoor_temp_icon02_color'
+        label:
+          color_rgb: !input 'home_indoor_temp_label02_color'
       time:
         label:
           color_rgb: !input 'time_label_color'
@@ -5522,7 +5566,8 @@ variables:
 
   ##### GENERAL ENTITYS #####
   outdoortemp: !input 'outdoortemp'
-  indoortemp: !input 'indoortemp'
+  indoortemp01: !input 'indoor_temp01'
+  indoortemp02: !input 'indoor_temp02'
   climate: !input 'climate'
   relay_1_local_fallback: !input 'relay_1_local_fallback'
   relay_2_local_fallback: !input 'relay_2_local_fallback'
@@ -6096,12 +6141,19 @@ trigger:
         entity_id: !input 'outdoortemp'
       id: outdoortemp_state
 
-    ##### indoor Temp Sensor - Trigger 'indoortemp_state' #####
+    ##### indoor Temp01 Sensor - Trigger 'indoor_temp01_state' #####
     - platform: event
       event_type: state_changed
       event_data:
-        entity_id: !input 'indoortemp'
-      id: indoortemp_state
+        entity_id: !input 'indoor_temp01'
+      id: indoor_temp01_state
+
+    ##### indoor Temp02 Sensor - Trigger 'indoor_temp02_state' #####
+    - platform: event
+      event_type: state_changed
+      event_data:
+        entity_id: !input 'indoor_temp02'
+      id: indoor_temp02_state
 
     ##### NSPAnel Temp Sensor - Trigger 'nspaneltemp_state' #####
     - platform: event
@@ -6461,56 +6513,64 @@ action:
                                       message: '{{ outdoor_temp | round(1) ~ temperature_units }}'
                                     continue_on_error: true
 
-                          - &refresh-page_home-indoor_temp
+                          - &refresh-page_home-indoor_temp01
                             if: '{{ true }}'
                             then:
-                              ##### NSPanel Indoor Temp #####
+                              ##### NSPanel Indoor Temp01 #####
                               - variables:
-                                  indoor_temp_state: '{{ states(indoortemp) | default("unavailable") if indoortemp is string and indoortemp is match "sensor." else states(nspaneltemp) }}'
+                                  indoor_temp01_state: '{{ state_attr(indoor_temp01, "current_temperature") | default("unavailable") if indoor_temp01 is string and indoor_temp01 is match "climate." else states(indoor_temp01) | default("unavailable") if indoor_temp01 is string and indoor_temp01 is match "sensor." else states(nspaneltemp) }}'
+                                  # ESPHome climate is typically hard coded to Celsius
                                   indoor_temp_units: >
                                     {{
-                                      state_attr(indoortemp, "unit_of_measurement") | default(temperature_units)
+                                      "°C"
                                       if
-                                        indoortemp is string and
-                                        indoortemp is match "sensor." and
-                                        state_attr(indoortemp, "unit_of_measurement") is string and
-                                        state_attr(indoortemp, "unit_of_measurement") | length > 0
+                                        indoor_temp01 is string and
+                                        indoor_temp01 is match "climate."
                                       else
                                         (
-                                          state_attr(nspaneltemp, "unit_of_measurement") | default(temperature_units)
+                                          state_attr(indoor_temp01, "unit_of_measurement") | default(temperature_units)
                                           if
-                                            state_attr(nspaneltemp, "unit_of_measurement") is string and
-                                            state_attr(nspaneltemp, "unit_of_measurement") | length > 0
-                                          else temperature_units
+                                            indoor_temp01 is string and
+                                            indoor_temp01 is match "sensor." and
+                                            state_attr(indoor_temp01, "unit_of_measurement") is string and
+                                            state_attr(indoor_temp01,"unit_of_measurement") | length > 0
+                                          else
+                                            (
+                                              state_attr(nspaneltemp,"unit_of_measurement") | default(temperature_units)
+                                              if
+                                                state_attr(nspaneltemp, "unit_of_measurement") is string and
+                                                state_attr(nspaneltemp, "unit_of_measurement")| length > 0
+                                              else temperature_units
+                                            )
                                         )
                                     }}
-                              - if: '{{ is_number(indoor_temp_state) }}'
+                              - if: '{{ is_number(indoor_temp01_state) }}'
                                 then:
                                   ### ICON Indoor Temp Font Color ###
                                   - *delay-default
                                   - service: '{{ nextion.command.font_color }}'
                                     data:
-                                      component: home.indoortempicon
+                                      component: home.temp01_icon
                                       message: >
                                         {{
-                                          page_home.general.indoor_temp.icon.color_rgb
-                                          if is_number(page_home.general.indoor_temp.icon.color_rgb)
-                                          else ((page_home.general.indoor_temp.icon.color_rgb[0] //(2**3)) *(2**11))+((page_home.general.indoor_temp.icon.color_rgb[1] //(2**2)) *(2**5))+(page_home.general.indoor_temp.icon.color_rgb[2] //(2**3))
+                                          page_home.general.indoor_temp01.icon.color_rgb
+                                          if is_number(page_home.general.indoor_temp01.icon.color_rgb)
+                                          else ((page_home.general.indoor_temp01.icon.color_rgb[0] //(2**3)) *(2**11))+((page_home.general.indoor_temp01.icon.color_rgb[1] //(2**2)) *(2**5))+(page_home.general.indoor_temp01.icon.color_rgb[2] //(2**3))
                                         }}
                                     continue_on_error: true
                                   ### ICON Indoor Temp Font ###
                                   - *delay-default
                                   - service: '{{ nextion.command.text_printf }}'
                                     data:
-                                      component: home.indoortempicon
+                                      component: home.temp01_icon
                                       message: >
                                         {{
-                                          all_icons[page_home.general.indoor_temp.icon.icon.split(":")[1]] | default(all_icons.unknown)
-                                          if page_home.general.indoor_temp.icon.icon.split(":") | count > 0
+                                          all_icons[page_home.general.indoor_temp01.icon.icon.split(":")[1]] | default(all_icons.unknown)
+                                          if page_home.general.indoor_temp01.icon.icon.split(":") | count > 0
                                           else
                                             (
-                                              page_home.general.indoor_temp.icon.icon
-                                              if page_home.general.indoor_temp.icon.icon is string
+                                              page_home.general.indoor_temp01.icon.icon
+                                              if page_home.general.indoor_temp01.icon.icon is string
                                               else all_icons.unknown
                                             )
                                         }}
@@ -6519,22 +6579,103 @@ action:
                                   - *delay-default
                                   - service: '{{ nextion.command.font_color }}'
                                     data:
-                                      component: home.current_temp
+                                      component: home.temp01_state
                                       message: >
                                         {{
-                                          page_home.general.indoor_temp.label.color_rgb
-                                          if is_number(page_home.general.indoor_temp.label.color_rgb)
-                                          else ((page_home.general.indoor_temp.label.color_rgb[0] //(2**3)) *(2**11))+((page_home.general.indoor_temp.label.color_rgb[1] //(2**2)) *(2**5))+(page_home.general.indoor_temp.label.color_rgb[2] //(2**3))
+                                          page_home.general.indoor_temp01.label.color_rgb
+                                          if is_number(page_home.general.indoor_temp01.label.color_rgb)
+                                          else ((page_home.general.indoor_temp01.label.color_rgb[0] //(2**3)) *(2**11))+((page_home.general.indoor_temp01.label.color_rgb[1] //(2**2)) *(2**5))+(page_home.general.indoor_temp01.label.color_rgb[2] //(2**3))
                                         }}
                                     continue_on_error: true
                                   ### LABEL Indoor Temp Font ###
                                   - *delay-default
                                   - service: '{{ nextion.command.text_printf }}'
                                     data:
-                                      component: home.current_temp
-                                      message: '{{ indoor_temp_state | round(1) ~ indoor_temp_units }}'
+                                      component: home.temp01_state
+                                      message: '{{ indoor_temp01_state | round(1) ~ indoor_temp_units }}'
                                     continue_on_error: true
 
+                          - &refresh-page_home-indoor_temp02
+                            if: '{{ true }}'
+                            then:
+                              ##### NSPanel Indoor Temp02 #####
+                              - variables:
+                                  indoor_temp02_state: '{{ state_attr(indoor_temp02, "current_temperature") | default("unavailable") if indoor_temp02 is string and indoor_temp02 is match "climate." else states(indoor_temp02) | default("unavailable") if indoor_temp02 is string and indoor_temp02 is match "sensor." else states(nspaneltemp) }}'
+                                  # ESPHome climate is typically hard coded to Celsius
+                                  indoor_temp_units: >
+                                    {{
+                                      "°C"
+                                      if
+                                        indoor_temp02 is string and
+                                        indoor_temp02 is match "climate."
+                                      else
+                                        (
+                                          state_attr(indoor_temp02, "unit_of_measurement") | default(temperature_units)
+                                          if
+                                            indoor_temp02 is string and
+                                            indoor_temp02 is match "sensor." and
+                                            state_attr(indoor_temp02, "unit_of_measurement") is string and
+                                            state_attr(indoor_temp02,"unit_of_measurement") | length > 0
+                                          else
+                                            (
+                                              state_attr(nspaneltemp,"unit_of_measurement") | default(temperature_units)
+                                              if
+                                                state_attr(nspaneltemp, "unit_of_measurement") is string and
+                                                state_attr(nspaneltemp, "unit_of_measurement")| length > 0
+                                              else temperature_units
+                                            )
+                                        )
+                                    }}
+                              - if: '{{ is_number(indoor_temp02_state) }}'
+                                then:
+                                  ### ICON Indoor Temp Font Color ###
+                                  - *delay-default
+                                  - service: '{{ nextion.command.font_color }}'
+                                    data:
+                                      component: home.temp02_icon
+                                      message: >
+                                        {{
+                                          page_home.general.indoor_temp02.icon.color_rgb
+                                          if is_number(page_home.general.indoor_temp02.icon.color_rgb)
+                                          else ((page_home.general.indoor_temp02.icon.color_rgb[0] //(2**3)) *(2**11))+((page_home.general.indoor_temp02.icon.color_rgb[1] //(2**2)) *(2**5))+(page_home.general.indoor_temp02.icon.color_rgb[2] //(2**3))
+                                        }}
+                                    continue_on_error: true
+                                  ### ICON Indoor Temp Font ###
+                                  - *delay-default
+                                  - service: '{{ nextion.command.text_printf }}'
+                                    data:
+                                      component: home.temp02_icon
+                                      message: >
+                                        {{
+                                          all_icons[page_home.general.indoor_temp02.icon.icon.split(":")[1]] | default(all_icons.unknown)
+                                          if page_home.general.indoor_temp02.icon.icon.split(":") | count > 0
+                                          else
+                                            (
+                                              page_home.general.indoor_temp02.icon.icon
+                                              if page_home.general.indoor_temp02.icon.icon is string
+                                              else all_icons.unknown
+                                            )
+                                        }}
+                                    continue_on_error: true
+                                  ### LABEL Indoor Temp Font Color ###
+                                  - *delay-default
+                                  - service: '{{ nextion.command.font_color }}'
+                                    data:
+                                      component: home.temp02_state
+                                      message: >
+                                        {{
+                                          page_home.general.indoor_temp02.label.color_rgb
+                                          if is_number(page_home.general.indoor_temp02.label.color_rgb)
+                                          else ((page_home.general.indoor_temp02.label.color_rgb[0] //(2**3)) *(2**11))+((page_home.general.indoor_temp02.label.color_rgb[1] //(2**2)) *(2**5))+(page_home.general.indoor_temp02.label.color_rgb[2] //(2**3))
+                                        }}
+                                    continue_on_error: true
+                                  ### LABEL Indoor Temp Font ###
+                                  - *delay-default
+                                  - service: '{{ nextion.command.text_printf }}'
+                                    data:
+                                      component: home.temp02_state
+                                      message: '{{ indoor_temp02_state | round(1) ~ indoor_temp_units }}'
+                                    continue_on_error: true
                           ##### NSPanel Buttons #####
                           - variables:
                               left_button_state: '{{ states(page_home.hardware.buttons.left.entity) | default("unavailable") if page_home.hardware.buttons.left.entity is string else "unavailable" }}'
@@ -9331,16 +9472,26 @@ action:
         sequence:
           - *refresh-page_home-outdoor_temp
 
-      ##### INDOOR TEMP #####
-      - alias: Indoor temp - Entity
+      ##### INDOOR TEMP01 #####
+      - alias: Indoor temp01 - Entity
         conditions:
           - condition: trigger
             id:
-              - indoortemp_state
+              - indoor_temp01_state
               - nspaneltemp_state
           - '{{ nspanel_event.page == page.home and is_number(trigger.event.data.new_state.state) }}'
         sequence:
-          - *refresh-page_home-indoor_temp
+          - *refresh-page_home-indoor_temp01
+
+      ##### INDOOR TEMP02 #####
+      - alias: Indoor temp02 - Entity
+        conditions:
+          - condition: trigger
+            id:
+              - indoor_temp02_state
+          - '{{ nspanel_event.page == page.home and is_number(trigger.event.data.new_state.state) }}'
+        sequence:
+          - *refresh-page_home-indoor_temp02
 
       ##### WEATHER STATE - change update #####
       - alias: Weather - State changed
