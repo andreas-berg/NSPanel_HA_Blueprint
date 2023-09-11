@@ -901,7 +901,7 @@ display:
         - logger.log: "Nextion start - Jump to page 8"
         - lambda: id(disp1).send_command_printf("page 8");
         - logger.log: "Nextion start - Publish ESPHome version"
-        - lambda: id(disp1).set_component_text_printf("boot.esph_version", "%s", "3.4.1"); ### esphome-version ###
+        - lambda: id(disp1).set_component_text_printf("boot.esph_version", "%s", "3.4.1-ab"); ### esphome-version ###
         - logger.log: "Nextion start - Wait for Home Assistant API"
         - wait_until:
             api.connected
