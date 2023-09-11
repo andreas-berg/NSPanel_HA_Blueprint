@@ -1,7 +1,7 @@
 # NSPanel Custom with HA Blueprint
 
-*This is a hard fork of the Blackymas project, pls read the [WIKI](https://github.com/andreas-berg/NSPanel_HA_Blueprint/wiki) first*
-
+> **Note**
+> This is a **hard fork** of the Blackymas project, pls read the [WIKI](https://github.com/andreas-berg/NSPanel_HA_Blueprint/wiki) first
 
 [![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fandreas-berg%2FNSPanel_HA_Blueprint%2Fblob%2Fmain%2Fnspanel_blueprint.yaml)
 
