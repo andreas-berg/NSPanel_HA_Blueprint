@@ -3380,9 +3380,9 @@ blueprint:
 
       ##### Sensors - Page Energy #####
         ##### PLACEHOLDER ######################################################################
-          placeholder02:
+          placeholder16:
             name: ' '
-            description: '# ✅ SENSOR ON ENERGY PAGE ✅'
+            description: '# ✅ ENERGY PAGES ✅'
             default: ' '
             selector: *placeholder-selector
         ##### PLACEHOLDER ######################################################################
@@ -3494,7 +3494,7 @@ blueprint:
 
     ##### General Custom Design #####
         ##### PLACEHOLDER ######################################################################
-          placeholder16:
+          placeholder17:
             name: ' '
             description: '# ✅ CUSTOM CONFIGURATION ✅'
             default: ' '
@@ -3601,6 +3601,17 @@ blueprint:
             default: false
             selector:
               boolean:
+          debug_log:
+            name: Write all Nextion printf commands to debuglog?
+            description: '*SYSTEM settings*
+
+              *When this is enabled, the raw printf-commands for the NSPanels Nextion display
+              are logged to a file on the Home assistant server.*
+
+              '
+            default: false
+            selector:
+              boolean: {}
 # yamllint enable rule:line-length
 #############################################################
 ##### CLOSE - INPUT #####
@@ -3672,6 +3683,7 @@ variables:
 
   ##### Nextion dict ####
   nextion:
+    debuglog: !input debug_log
     color:
       blue: '1055' # rgb(0, 128, 248)
       grey_dark: '10597' # rgb(40, 44, 40)
@@ -6221,10 +6233,25 @@ action:
                 }}
           - if: '{{ settings_entity_domain in ["light", "cover", "climate"] }}'
             then:
-              - service: '{{ nextion.command.printf }}'
-                data:
-                  cmd: 'page {{ page[settings_entity_domain] }}'
-                continue_on_error: true
+              - variables:
+                  nextion_cmd: page {{ page[settings_entity_domain] }}
+              - &nextion-printf
+                if: '{{ nextion.debuglog }}'
+                then:
+                  - parallel:
+                      - service: '{{ nextion.command.printf }}'
+                        data:
+                          cmd: '{{ nextion_cmd }}'
+                        continue_on_error: true
+                      - service: notify.debuglog
+                        data:
+                          message: '{{ nextion_cmd }}'
+                        continue_on_error: true
+                else:
+                  - service: '{{ nextion.command.printf }}'
+                    data:
+                      cmd: '{{ nextion_cmd }}'
+                    continue_on_error: true
               - &delay-default
                 delay:
                   milliseconds: '{{ delay_value }}'
@@ -8442,6 +8469,8 @@ action:
                           ##### DRAW GRAPH
                           - variables:
                               cs:
+                                - c: 65535
+                                  rgb: rgb(255, 255, 255)
                                 - ts: 0
                                   c: 30189
                                   rgb: rgb(115, 191, 105)
@@ -8490,20 +8519,13 @@ action:
                                 - 21
                                 - 0
                               sequence:
-                                - service: '{{ nextion.command.printf }}'
-                                  data:
-                                    cmd: >-
-                                      line {{ ((repeat.index * 10 * 3) + 28)|string }},{{ (yoff +
-                                      4)|string }},{{ ((repeat.index * 10 * 3) + 28)|string }},{{
-                                      yoff|string }},WHITE
-                                  continue_on_error: true
+                                - variables:
+                                    nextion_cmd: line {{ ((repeat.index * 10 * 3) + 28)|string }},{{ (yoff + 4)|string }},{{ ((repeat.index * 10 * 3) + 28)|string }},{{ yoff|string }},WHITE
+                                - *nextion-printf
                                 - *delay-default
-                                - service: '{{ nextion.command.printf }}'
-                                  data:
-                                    cmd: >-
-                                      xstr {{ ((repeat.index * 10 * 3) + 22)|string }},{{ (yoff +
-                                      4)|string }},16,16,0,WHITE,388,1,0,1,"{{ repeat.item|string }}"
-                                  continue_on_error: true
+                                - variables:
+                                    nextion_cmd: xstr {{ ((repeat.index * 10 * 3) + 22)|string }},{{ (yoff + 4)|string }},16,16,0,WHITE,388,1,0,1,"{{ repeat.item|string }}"
+                                - *nextion-printf
                                 - *delay-default
                           # DRAW HORIZONTAL GRID LINES
                           - repeat:
@@ -8511,44 +8533,39 @@ action:
                               sequence:
                                 - variables:
                                     i: "{{ repeat.item|float }}"
-                                - service: '{{ nextion.command.printf }}'
-                                  data:
-                                    cmd: >-
+                                    nextion_cmd: >-
                                       draw {{ ( xoff + 6 ) |string }},{{ ( yoff - (i * hmax|float)|int )|string }},{{ ( xoff + (24 * 10) + 20 )|string }},{{ ( yoff - (i * hmax|float)|int  )|string }},GRAY
-                                  continue_on_error: true
+                                - *nextion-printf
                                 - *delay-default
-                                - service: '{{ nextion.command.printf }}'
-                                  data:
-                                    cmd: >-
+                                - variables:
+                                    nextion_cmd:: >-
                                       xstr {{ ( xoff - 25 )|string }},{{ (yoff - (i * hmax|float)|int - 7 )|string }},40,16,0,WHITE,388,1,0,1,"{{ ( i|float * mx|float )|round(1)|string }}"
-                                  continue_on_error: true
+                                - *nextion-printf
                                 - *delay-default
                           # PLOT THE BARS, EVALUATE BAR COLOR FROM THRESHOLDS
+                          # Min-height: 2px, so that something is shown
                           - repeat:
                               for_each: "{{ data }}"
                               sequence:
                                 - variables:
-                                    v: "{{ repeat.item }}"
+                                    v: "{{ repeat.item|float }}"
                                     c: >-
-                                      {{ cs[4].c if v > cs[4].th else cs[3].c if v > cs[3].th else
+                                      {{ cs[5].c if v > cs[5].th else cs[4].c if v > cs[4].th else cs[3].c if v > cs[3].th else
                                       cs[2].c if v > cs[2].th else cs[1].c if v > cs[1].th else cs[0].c
                                       }}
                                     x: "{{ (xoff + (repeat.index * colw) + colw) }}"
-                                    q: "{{ (hmax/mx)|float }}"
-                                    h: "{{ (repeat.item * q)|int }}"
-                                - service: '{{ nextion.command.printf }}'
-                                  data:
-                                    cmd: >-
-                                      fill {{ x|string }},{{ (yoff - h)|string }},{{(colw-3)|string}},{{
-                                      h|string }},{{ c }}
-                                  continue_on_error: true
+                                    q: "{{ (hmax|float/mx)|float }}"
+                                    h: "{{ (v * q)|int }}"
+                                    neg: '{{ true if v < 0.0 else false}}'
+                                    nextion_cmd: >-
+                                      fill {{ x|string }},{{ (yoff if neg else (yoff - h))|string }},{{(colw-3)|string}},{{ [h,2]|max|string }},{{ c }}
+                                - *nextion-printf
                                 - *delay-default
                           # DRAW VERTICAL LINE SHOWING CURRENT TIME (ONLY ON TODAYS DATA)
-                          - service: '{{ nextion.command.printf }}'
-                            data:
-                              cmd: >-
+                          - variables:
+                              nextion_cmd: >-
                                 draw {{ (((now_hour_float + 2.0) * colw|float)|int + xoff - 2)|string }},{{ (yoff - hmax - 4)|string }},{{ (((now_hour_float + 2.0) * colw|float)|int + xoff - 1)|string }},{{ (yoff + 4)|string }},WHITE
-                            continue_on_error: true
+                          - *nextion-printf
                           - *delay-default
                           # PRINT TEXTS
                           - variables:
@@ -8564,40 +8581,34 @@ action:
                                   unit: "{{ \"(+1d)\" if future_min_delta.next_day>0 else \"\" }}"
                                 - desc: "Om"
                                   value: "{{ future_min_delta.hours ~ \"h\" ~ future_min_delta.minutes ~ \"m\" }}"
-                          - service: '{{ nextion.command.printf }}'
-                            data:
-                              cmd: >-
+                              nextion_cmd: >-
                                 xstr {{ ( xoff + (12 * 10) - 50 )|string }},{{ (yoff - hmax - 50)|string }},100,32,3,WHITE,388,1,0,1,"{{ 'I morgon' if show_day == 1 else 'I dag' }}"
-                            continue_on_error: true
+                          - *nextion-printf
                           - *delay-default
                           - repeat:
                               for_each: "{{ texts }}"
                               sequence:
-                                - service: '{{ nextion.command.printf }}'
-                                  data:
-                                    cmd: >-
+                                - variables:
+                                    nextion_cmd: >-
                                       xstr {{ ( xoff + (24 * 10) + 30 )|string }},{{ (yoff - hmax + repeat.index * 48 - 60)|string }},84,16,0,WHITE,388,0,1,1,"{{ repeat.item.desc|string }}"
-                                  continue_on_error: true
+                                - *nextion-printf
                                 - *delay-default
                                 - if: '{{ repeat.item.unit is defined }}'
                                   then:
-                                    - service: '{{ nextion.command.printf }}'
-                                      data:
-                                        cmd: >-
+                                    - variables:
+                                        nextion_cmd: >-
                                           xstr {{ ( xoff + (24 * 10) + 30 )|string }},{{ (yoff - hmax + repeat.index * 48 - 44)|string }},80,32,3,WHITE,388,2,0,1,"{{ repeat.item.value|string }}"
-                                      continue_on_error: true
+                                    - *nextion-printf
                                     - *delay-default
-                                    - service: '{{ nextion.command.printf }}'
-                                      data:
-                                        cmd: xstr {{ ( xoff + (24 * 10) + 110 )|string }},{{ (yoff - hmax + repeat.index * 48 - 44)|string }},48,16,0,WHITE,388,0,0,1,"{{ repeat.item.unit|string }}"
-                                      continue_on_error: true
+                                    - variables:
+                                        nextion_cmd: xstr {{ ( xoff + (24 * 10) + 110 )|string }},{{ (yoff - hmax + repeat.index * 48 - 44)|string }},48,16,0,WHITE,388,0,0,1,"{{ repeat.item.unit|string }}"
+                                    - *nextion-printf
                                     - *delay-default
                                   else:
-                                    - service: '{{ nextion.command.printf }}'
-                                      data:
-                                        cmd: >-
+                                    - variables:
+                                        nextion_cmd: >-
                                           xstr {{ ( xoff + (24 * 10) + 30 )|string }},{{ (yoff - hmax + repeat.index * 48 - 44)|string }},128,32,3,WHITE,388,1,0,1,"{{ repeat.item.value|string }}"
-                                      continue_on_error: true
+                                    - *nextion-printf
                                     - *delay-default
 
 

@@ -1,14 +1,15 @@
-#####################################################################################################
-##### NSPANEL ESPHOME created by Blackymas - https://github.com/Blackymas/NSPanel_HA_Blueprint  #####
-##### ADVANCED CONFIG + FULL ESPHOME CODE!                                                      #####
-##### PLEASE only make changes if it is necessary and also the required knowledge is available. #####
-##### For normal use with the Blueprint, no changes are necessary.                              #####
-#####################################################################################################
+#########################################################################################################
+##### NSPANEL ESPHOME created by Blackymas - https://github.com/andsreas-berg/NSPanel_HA_Blueprint  #####
+##### ADVANCED CONFIG + FULL ESPHOME CODE!                                                          #####
+##### PLEASE only make changes if it is necessary and also the required knowledge is available.     #####
+##### For normal use with the Blueprint, no changes are necessary.                                  #####
+#########################################################################################################
 
 
 ##### ADVANCED CONFIGURATION - activate only when you know what you do ##############################
 substitutions:
-  baud_rate: "115200" # requires 115200 if tft is installed but can be changed to 9600 if tft upload fails and nextion switches to 9600
+  #baud_rate: "115200" # requires 115200 if tft is installed but can be changed to 9600 if tft upload fails and nextion switches to 9600
+  baud_rate: "921600"
   # ## usage of secrets-file ## -> comment in ###### Change ME ######
   # device_name: "nspanel-name" # Wird im Blueprint benötigt!
   # wifi_ssid: !secret nspanel_wifi_ssid # add in your esphome secrets file.
