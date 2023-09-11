@@ -5504,9 +5504,9 @@ variables:
       indoor_temp02:
         icon:
           icon: !input 'home_indoor_temp02_icon' #E50E
-          color_rgb: !input 'home_indoor_temp_icon02_color'
+          color_rgb: !input 'home_indoor_temp02_icon_color'
         label:
-          color_rgb: !input 'home_indoor_temp_label02_color'
+          color_rgb: !input 'home_indoor_temp02_label_color'
       time:
         label:
           color_rgb: !input 'time_label_color'
