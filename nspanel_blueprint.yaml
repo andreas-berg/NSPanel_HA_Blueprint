@@ -8471,7 +8471,7 @@ action:
                               cs:
                                 - c: 65535
                                   rgb: rgb(255, 255, 255)
-                                - ts: 0
+                                - th: 0
                                   c: 30189
                                   rgb: rgb(115, 191, 105)
                                 - th: 10
@@ -8538,7 +8538,7 @@ action:
                                 - *nextion-printf
                                 - *delay-default
                                 - variables:
-                                    nextion_cmd:: >-
+                                    nextion_cmd: >-
                                       xstr {{ ( xoff - 25 )|string }},{{ (yoff - (i * hmax|float)|int - 7 )|string }},40,16,0,WHITE,388,1,0,1,"{{ ( i|float * mx|float )|round(1)|string }}"
                                 - *nextion-printf
                                 - *delay-default
@@ -8557,8 +8557,7 @@ action:
                                     q: "{{ (hmax|float/mx)|float }}"
                                     h: "{{ (v * q)|int }}"
                                     neg: '{{ true if v < 0.0 else false}}'
-                                    nextion_cmd: >-
-                                      fill {{ x|string }},{{ (yoff if neg else (yoff - h))|string }},{{(colw-3)|string}},{{ [h,2]|max|string }},{{ c }}
+                                    nextion_cmd: fill {{ x|string }},{{ (yoff if neg else (yoff - h))|string }},{{ (colw-3)|string }},{{ [h,2]|max|string }},{{ c }}
                                 - *nextion-printf
                                 - *delay-default
                           # DRAW VERTICAL LINE SHOWING CURRENT TIME (ONLY ON TODAYS DATA)
