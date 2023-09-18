@@ -3215,8 +3215,6 @@ variables:
   relay_1_local_fallback: !input 'relay_1_local_fallback'
   relay_2_local_fallback: !input 'relay_2_local_fallback'
 
-  ##### ENTITIES #####
-  entitypages_enabled: !input 'entitypages_enabled'
 
 #############################################################
 ##### CLOSE - Variables #####
