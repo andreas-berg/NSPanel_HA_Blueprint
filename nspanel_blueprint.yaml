@@ -3529,6 +3529,17 @@ blueprint:
               *Label color which should be displayed*
             default: [200, 204, 200] #52857 Grey super light
             selector: *color-selector
+          energy_prices:
+            name: Electricity Day-ahead Prices Sensor - ENTITY (Optional)
+            description: >
+              *ENERGY page*
+
+              *Sensor entity with electricity price data. Can be either a Entso-e integration or Nordpool integration.*
+            default: []
+            selector:
+              entity:
+                domain:
+                  - sensor
 
     ##### General Custom Design #####
         ##### PLACEHOLDER ######################################################################
@@ -6566,13 +6577,13 @@ action:
                                       component: home.temp01_icon
                                       message: >
                                         {{
-                                          all_icons[page_home.general.indoor_temp01.icon.icon.split(":")[1]] | default(all_icons.unknown)
+                                          ms_icons[page_home.general.indoor_temp01.icon.icon.split(":")[1]] | default(ms_icons.unknown)
                                           if page_home.general.indoor_temp01.icon.icon.split(":") | count > 0
                                           else
                                             (
                                               page_home.general.indoor_temp01.icon.icon
                                               if page_home.general.indoor_temp01.icon.icon is string
-                                              else all_icons.unknown
+                                              else ms_icons.unknown
                                             )
                                         }}
                                     continue_on_error: true
@@ -6648,13 +6659,13 @@ action:
                                       component: home.temp02_icon
                                       message: >
                                         {{
-                                          all_icons[page_home.general.indoor_temp02.icon.icon.split(":")[1]] | default(all_icons.unknown)
+                                          ms_icons[page_home.general.indoor_temp02.icon.icon.split(":")[1]] | default(ms_icons.unknown)
                                           if page_home.general.indoor_temp02.icon.icon.split(":") | count > 0
                                           else
                                             (
                                               page_home.general.indoor_temp02.icon.icon
                                               if page_home.general.indoor_temp02.icon.icon is string
-                                              else all_icons.unknown
+                                              else ms_icons.unknown
                                             )
                                         }}
                                     continue_on_error: true
@@ -8628,8 +8639,14 @@ action:
                                 - th: 60
                                   c: 41625
                                   rgb: rgb(163, 82, 204)
-                              today: "{{ state_attr(\"sensor.nordpool_kwh_fi_eur_3_10_0\",\"today\") | list }}"
-                              tomorrow: "{{ state_attr(\"sensor.nordpool_kwh_fi_eur_3_10_0\",\"tomorrow\") | list }}"
+                              price_entity: !input 'energy_prices'
+                              # today and tomorrow are 24 item arrays of floats = spot prices(in cents/kWh), 
+                              # for 24h slots (00h-23h in local time)
+                              # tommorrow data is available today after 13:45 CET
+                              # entsoe-e prices_today example: [{'time': '2023-09-12 01:00:00+03:00', 'price': -0.00231}, ...]   
+                              price_model: '{{ "entsoe" if ( state_attr(price_entity,"attribution") is string and state_attr(price_entity,"attribution") is match(".*ENTSO*")) else "nordpool" if state_attr(price_entity,"today") is iterable else "unknown"}}'
+                              today: '{{ state_attr(price_entity,"prices_today")|map(attribute="price")|list() if price_model == "entsoe" else state_attr(price_entity,"today") if price_model == "nordpool" else [] }}'
+                              tomorrow: '{{ state_attr(price_entity,"prices_tomorrow")|map(attribute="price")|list() if price_model == "entsoe" else state_attr(price_entity,"tomorrow") if price_model == "nordpool" else [] }}'
                               show_day: 0
                               data: "{{ tomorrow if (show_day == 1 and tomorrow is defined) else today }}"
                               now_hour_float: "{{ ( now().hour|float ) + ( ( now().minute|float ) / 60.0 ) }}"
